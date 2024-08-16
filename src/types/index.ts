@@ -1,0 +1,1 @@
+type UserArrayData = null | number[]

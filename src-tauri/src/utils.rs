@@ -1,9 +1,12 @@
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine as _};
 
+use std::fs::File;
+use std::io::Write;
+
 use crate::constants::{APP_SIGNATURE, APP_SIGNATURE_LEN};
 
 #[tauri::command]
-pub fn check_is_encrypted_file(data: Vec<u8>) -> Result<bool, String> {
+pub fn check_is_encrypted(data: Vec<u8>) -> Result<bool, String> {
     if data.len() < *APP_SIGNATURE_LEN {
         return Ok(false);
     }
@@ -18,17 +21,14 @@ pub fn check_is_encrypted_file(data: Vec<u8>) -> Result<bool, String> {
 }
 
 #[tauri::command(async)]
-pub fn show_in_fs(path: String) {
-    showfile::show_path_in_file_manager(path)
+pub fn write_data_to_file(data: Vec<u8>, path: String) -> Result<bool, String> {
+    let mut output_file = File::create(path).map_err(|e| e.to_string())?;
+    output_file.write_all(&data).map_err(|e| e.to_string())?;
+
+    Ok(true)
 }
 
 #[tauri::command(async)]
-pub fn get_file_type(data: Vec<u8>) -> Result<String, bool> {
-    match infer::get(&data) {
-        Some(kind) => {
-            let extension = kind.extension();
-            Ok(extension.to_string())
-        }
-        None => Err(false),
-    }
+pub fn show_file(path: String) {
+    showfile::show_path_in_file_manager(path)
 }

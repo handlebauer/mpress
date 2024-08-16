@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@ark-ui/react": "^3.6.2",
+    "@radix-ui/react-alert-dialog": "^1.1.1",
     "@radix-ui/react-slot": "^1.1.0",
     "@tauri-apps/api": "^1",
     "class-variance-authority": "^0.7.0",
@@ -19,10 +20,13 @@
     "lucide-react": "^0.418.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-hotkeys-hook": "^4.5.0",
     "react-otp-input": "^3.1.1",
+    "react-router-dom": "^6.26.0",
     "remeda": "^2.11.0",
     "tailwind-merge": "^2.4.0",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "zustand": "^4.5.4"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.0",

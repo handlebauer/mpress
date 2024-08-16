@@ -5,22 +5,65 @@ mod decrypt;
 mod encrypt;
 mod utils;
 
-use decrypt::decrypt_file;
-use encrypt::encrypt_file;
-use utils::check_is_encrypted_file;
-use utils::get_file_type;
-use utils::show_in_fs;
+use decrypt::decrypt_data;
+use encrypt::encrypt_data;
+use tauri::Manager;
+use tauri::WindowBuilder;
+use tauri::WindowMenuEvent;
+use tauri::Wry;
+use utils::check_is_encrypted;
+use utils::show_file;
+use utils::write_data_to_file;
 
 use tauri::{CustomMenuItem, Menu, MenuItem, Submenu};
 
+fn create_menu() -> Menu {
+    let settings =
+        CustomMenuItem::new("settings".to_string(), "Settings").accelerator("CmdOrCtrl+,");
+    let submenu = Submenu::new(
+        "File",
+        Menu::new()
+            .add_item(settings)
+            .add_native_item(MenuItem::Separator)
+            .add_native_item(MenuItem::CloseWindow)
+            .add_native_item(MenuItem::Quit),
+    );
+    Menu::new().add_submenu(submenu)
+}
+
+#[derive(Clone, serde::Serialize)]
+struct Payload {
+    message: String,
+}
+
+fn menu_handler(event: WindowMenuEvent<Wry>) {
+    match event.menu_item_id() {
+        "settings" => {
+            let main = event.window();
+            main.emit("open-settings", {});
+            // let window = WindowBuilder::new(
+            //     &handle,
+            //     "settings".to_string(),
+            //     tauri::WindowUrl::App("index.html".into()),
+            // )
+            // .build()
+            // .expect("Settings window failed to build");
+            // window.listen(event, handler)
+        }
+        _ => {}
+    }
+}
+
 fn main() {
     tauri::Builder::default()
+        .menu(create_menu())
+        .on_menu_event(menu_handler)
         .invoke_handler(tauri::generate_handler![
-            decrypt_file,
-            encrypt_file,
-            check_is_encrypted_file,
-            show_in_fs,
-            get_file_type
+            decrypt_data,
+            encrypt_data,
+            write_data_to_file,
+            check_is_encrypted,
+            show_file,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
