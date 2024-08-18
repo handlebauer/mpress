@@ -6,6 +6,7 @@ import { TargetOperation } from '~/store'
 
 interface ConfirmButtonProps {
   targetOperation: null | TargetOperation
+  outputPath: string
   onConfirm: (
     event: MouseEvent<HTMLButtonElement, globalThis.MouseEvent>,
   ) => void
@@ -29,8 +30,9 @@ export default function ConfirmButton(props: ConfirmButtonProps) {
 
   return (
     <Button
-      className="w-full border-gray-500 text-xs font-thin uppercase"
+      disabled={!props.outputPath}
       onClick={props.onConfirm}
+      className="w-full select-none border-gray-500 text-xs font-thin uppercase"
     >
       {renderIcon()}
       {renderLabel()}

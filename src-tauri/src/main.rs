@@ -7,8 +7,8 @@ mod utils;
 
 use decrypt::decrypt_data;
 use encrypt::encrypt_data;
+use tauri::AboutMetadata;
 use tauri::Manager;
-use tauri::WindowBuilder;
 use tauri::WindowMenuEvent;
 use tauri::Wry;
 use utils::check_is_encrypted;
@@ -23,6 +23,7 @@ fn create_menu() -> Menu {
     let submenu = Submenu::new(
         "File",
         Menu::new()
+            .add_native_item(MenuItem::About("mpress".to_string(), AboutMetadata::new()))
             .add_item(settings)
             .add_native_item(MenuItem::Separator)
             .add_native_item(MenuItem::CloseWindow)
@@ -31,24 +32,12 @@ fn create_menu() -> Menu {
     Menu::new().add_submenu(submenu)
 }
 
-#[derive(Clone, serde::Serialize)]
-struct Payload {
-    message: String,
-}
-
 fn menu_handler(event: WindowMenuEvent<Wry>) {
     match event.menu_item_id() {
         "settings" => {
             let main = event.window();
-            main.emit("open-settings", {});
-            // let window = WindowBuilder::new(
-            //     &handle,
-            //     "settings".to_string(),
-            //     tauri::WindowUrl::App("index.html".into()),
-            // )
-            // .build()
-            // .expect("Settings window failed to build");
-            // window.listen(event, handler)
+            main.emit("open-settings", {})
+                .expect("Failed to emit open-settings event");
         }
         _ => {}
     }
@@ -56,6 +45,15 @@ fn menu_handler(event: WindowMenuEvent<Wry>) {
 
 fn main() {
     tauri::Builder::default()
+        .setup(|app| {
+            let main = app.get_window("main").unwrap();
+            main.set_resizable(false).expect("set_resizable failed");
+            main.set_minimizable(false).expect("set_minimizable failed");
+            main.set_maximizable(false).expect("set_maximizable failed");
+            main.set_always_on_top(true)
+                .expect("set_always_on_top failed");
+            Ok(())
+        })
         .menu(create_menu())
         .on_menu_event(menu_handler)
         .invoke_handler(tauri::generate_handler![
@@ -68,41 +66,3 @@ fn main() {
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
-
-// fn main() {
-//     let password = "secret123".to_string();
-//     let data = [8u8; 10];
-//     let input_path = "/Users/dg/Projects/demos/hello-tauri/src-tauri/dummy/data".to_string();
-//     let output_path = "/Users/dg/Projects/demos/hello-tauri/src-tauri/dummy/data.enc".to_string();
-//     let test_decrypt_path =
-//         "/Users/dg/Projects/demos/hello-tauri/src-tauri/dummy/data.dec".to_string();
-
-//     match is_encrypted_file(password) {
-//         Ok(is_encrypted) => {
-//             println!("Is encrypted file: {}", &is_encrypted)
-//         }
-//         Err(e) => {
-//             println!("Fn error: {}", e)
-//         }
-//     }
-// }
-
-// Read the file
-// let mut file = File::open(&file_path).map_err(|e| e.to_string())?;
-// let mut contents = Vec::new();
-// file.read_to_end(&mut contents).map_err(|e| e.to_string())?;
-
-//     match encrypt_file(&input_path, &password, &output_path) {
-//         Ok(_) => {
-//             println!("Wrote encrypted file to {}", &output_path);
-//         }
-//         Err(e) => println!("Encryption error: {}", e),
-//     }
-
-//     match decrypt_file(&output_path, &password, &test_decrypt_path) {
-//         Ok(decrypted) => {
-//             println!("Decrypted: {}", &decrypted);
-//         }
-//         Err(e) => println!("Decryption error: {}", e),
-//     }
-// }

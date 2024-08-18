@@ -1,86 +1,103 @@
-import { MouseEvent, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useCallback, useEffect, useMemo } from 'react'
 import { shallow } from 'zustand/shallow'
 
-import { Store, TargetOperation, useStore } from '~/store'
+import { Store, useStore } from '~/store'
 
 import FromMemory from '~/components/auth/FromMemory'
 import LongPress from '~/components/auth/LongPress'
+import { useCrypto } from '~/hooks/use-crypto'
 import AuthFailure from '~/components/auth/AuthFailure'
+// import AuthFailure from '~/components/auth/AuthFailure'
 
-enum AuthStage {
-  'FROM_MEMORY',
-  'LONG_PRESS',
-  'FAILURE',
+function useAuthComponents() {
+  const { config, fromMemory, longPress, setFromMemory, setLongPress } =
+    useStore(
+      (state: Store) => ({
+        config: state.config,
+        fromMemory: state.fromMemory,
+        longPress: state.longPress,
+        setFromMemory: state.setFromMemory,
+        setLongPress: state.setLongPress,
+      }),
+      shallow,
+    )
+
+  const handleFromMemoryDone = useCallback(
+    (input: string) => {
+      setFromMemory(input)
+    },
+    [setFromMemory],
+  )
+
+  const handleLongPressDone = useCallback(
+    (input: string) => {
+      setLongPress(input)
+    },
+    [setLongPress],
+  )
+
+  const components = useMemo(
+    () => [
+      {
+        Component: FromMemory,
+        props: {
+          charLength: config.fromMemory.charLength,
+          onProgressDone: handleFromMemoryDone,
+        },
+        shouldRender: config.fromMemory.enabled && !fromMemory,
+      },
+      {
+        Component: LongPress,
+        props: {
+          charLength: config.longPress.charLength,
+          onProgressDone: handleLongPressDone,
+        },
+        shouldRender: config.longPress.enabled && !longPress,
+      },
+    ],
+    [config, fromMemory, longPress, handleFromMemoryDone, handleLongPressDone],
+  )
+
+  return {
+    activeComponent: components.find(({ shouldRender }) => shouldRender),
+    setFromMemory,
+    setLongPress,
+  }
 }
 
 export default function Auth() {
-  const navigate = useNavigate()
-  const stateSelector = (state: Store) =>
-    [
-      state.targetOperation,
-      state.setPass,
-      state.decrypt,
-      state.encrypt,
-    ] as const
-  const [targetOperation, setPass, decrypt, encrypt] = useStore(
-    stateSelector,
-    shallow,
+  const setCurrentPage = useStore(state => state.setCurrentPage, shallow)
+  const { handleCrypto, error, clearError } = useCrypto()
+  const { activeComponent, setFromMemory, setLongPress } = useAuthComponents()
+
+  useEffect(() => {
+    setCurrentPage('/auth')
+  }, [setCurrentPage])
+
+  useEffect(() => {
+    if (!activeComponent && !error) {
+      handleCrypto()
+    }
+  }, [activeComponent, handleCrypto, error])
+
+  const handleTryAgain = useCallback(
+    (event: React.MouseEvent<HTMLButtonElement, globalThis.MouseEvent>) => {
+      event.preventDefault()
+      setFromMemory('')
+      setLongPress('')
+      clearError()
+    },
+    [setFromMemory, setLongPress],
   )
-  const [authStage, setAuthStage] = useState(AuthStage.FROM_MEMORY)
 
-  const handleTryAgain = (
-    event: MouseEvent<HTMLButtonElement, globalThis.MouseEvent>,
-  ) => {
-    event.preventDefault()
-    setPass('')
-    setAuthStage(AuthStage.FROM_MEMORY)
+  if (error) {
+    return <AuthFailure onTryAgain={handleTryAgain} />
   }
 
-  const handleProgressDone = (pass: string) => {
-    switch (authStage) {
-      case AuthStage.FROM_MEMORY: {
-        setPass(pass)
-        return void setAuthStage(AuthStage.LONG_PRESS)
-      }
-      case AuthStage.LONG_PRESS: {
-        setPass(pass)
-        if (targetOperation === TargetOperation.DECRYPT) {
-          return void decrypt()
-            .then(() => navigate('/confirm', { replace: true }))
-            .catch(() => setAuthStage(AuthStage.FAILURE))
-        }
-        if (targetOperation === TargetOperation.ENCRYPT) {
-          return void encrypt()
-            .then(() => navigate('/confirm', { replace: true }))
-            .catch(error => {
-              console.error(error)
-              return setAuthStage(AuthStage.FAILURE)
-            })
-        }
-        throw new Error('Encountered invalid TargetOperation')
-      }
-      case AuthStage.FAILURE: {
-        return <AuthFailure onTryAgain={handleTryAgain} />
-      }
-      default: {
-        return <p>should never get here</p>
-      }
-    }
+  if (activeComponent) {
+    const { Component, props } = activeComponent
+    return <Component {...props} />
   }
 
-  switch (authStage) {
-    case AuthStage.FROM_MEMORY: {
-      return <FromMemory onProgressDone={handleProgressDone} />
-    }
-    case AuthStage.LONG_PRESS: {
-      return <LongPress onProgressDone={handleProgressDone} />
-    }
-    case AuthStage.FAILURE: {
-      return <AuthFailure onTryAgain={handleTryAgain} />
-    }
-    default: {
-      return <div>something went wrong</div>
-    }
-  }
+  return null
 }

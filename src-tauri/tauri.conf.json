@@ -6,21 +6,26 @@
     "distDir": "../dist"
   },
   "package": {
-    "productName": "mpress",
-    "version": "0.0.0"
+    "productName": "mpress"
   },
   "tauri": {
     "allowlist": {
       "all": false,
       "dialog": {
         "save": true
+      },
+      "fs": {
+        "scope": ["$APPCONFIG/*"],
+        "exists": true,
+        "readFile": true,
+        "writeFile": true
       }
     },
     "windows": [
       {
         "title": "mpress",
         "width": 240,
-        "height": 180
+        "height": 210
       }
     ],
     "security": {

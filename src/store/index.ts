@@ -2,25 +2,61 @@ import { invoke } from '@tauri-apps/api/tauri'
 import { createWithEqualityFn } from 'zustand/traditional'
 import { arrayBufferToPlainArray, stringToPlainArray } from '~/lib/utils'
 
+import {
+  FROM_MEMORY_DEFAULT_LENGTH,
+  FROM_MEMORY_MAX_LENGTH,
+  FROM_MEMORY_MIN_LENGTH,
+  LONG_PRESS_DEFAULT_LENGTH,
+  LONG_PRESS_MAX_LENGTH,
+  LONG_PRESS_MIN_LENGTH,
+} from '~/constants'
+
+import { BaseDirectory, writeTextFile } from '@tauri-apps/api/fs'
+
+import { omit } from 'remeda'
+
 export enum TargetOperation {
   'ENCRYPT',
   'DECRYPT',
 }
 
+type Pages = '/' | '/auth' | '/confirm' | '/success'
+
+export type Config = {
+  fromMemory: {
+    enabled: boolean
+    charLength: number
+  }
+  longPress: {
+    enabled: boolean
+    charLength: number
+  }
+}
+
 type State = {
+  config: Config
+  currentPage: Pages
   fileName: string
   fileData: null | number[]
   targetOperation: null | TargetOperation
   initFileExtension: string
   postFileExtension: string
-  pass: string
+  fromMemory: string
+  longPress: string
+  fromMemoryMinLength: number
+  fromMemoryMaxLength: number
+  longPressMinLength: number
+  longPressMaxLength: number
   outputPath: string
   outputData: null | number[] | string
 }
 
 type Actions = {
+  setConfig: (config: Config) => Promise<void>
+  setCurrentPage: (page: Pages) => void
   setFile: (fileName: string, arrayBuffer: ArrayBuffer) => Promise<void>
-  setPass: (passPart: string) => void
+  setFromMemory: (input: string) => void
+  setLongPress: (input: string) => void
   setOutputPath: (outputPath: null | string) => void
   decrypt: () => Promise<void>
   encrypt: () => Promise<void>
@@ -31,18 +67,36 @@ type Actions = {
 export type Store = State & Actions
 
 const initialState: State = {
+  config: {
+    fromMemory: { enabled: true, charLength: FROM_MEMORY_DEFAULT_LENGTH },
+    longPress: { enabled: true, charLength: LONG_PRESS_DEFAULT_LENGTH },
+  },
+  currentPage: '/',
   fileName: '',
   fileData: null,
   targetOperation: null,
   initFileExtension: '',
   postFileExtension: '',
-  pass: '',
+  fromMemory: '',
+  longPress: '',
+  fromMemoryMinLength: FROM_MEMORY_MIN_LENGTH,
+  fromMemoryMaxLength: FROM_MEMORY_MAX_LENGTH,
+  longPressMinLength: LONG_PRESS_MIN_LENGTH,
+  longPressMaxLength: LONG_PRESS_MAX_LENGTH,
   outputPath: '',
   outputData: null,
 }
 
 export const useStore = createWithEqualityFn<Store>((set, get) => ({
   ...initialState,
+  setConfig: async (config: Config) => {
+    const opts = { dir: BaseDirectory.AppConfig }
+    await writeTextFile('app.conf', JSON.stringify(config), opts)
+    set({ config })
+  },
+  setCurrentPage: (page: Pages) => {
+    set({ currentPage: page })
+  },
   setFile: async (fileName: string, arrayBuffer: ArrayBuffer) => {
     const fileData = arrayBufferToPlainArray(arrayBuffer)
 
@@ -52,14 +106,15 @@ export const useStore = createWithEqualityFn<Store>((set, get) => ({
       ? TargetOperation.DECRYPT
       : TargetOperation.ENCRYPT
 
-    return set({ fileName, fileData, targetOperation })
+    set({ fileName, fileData, targetOperation })
   },
-  setPass: (passPart: string) =>
-    set(({ pass }) => ({ pass: passPart ? pass + passPart : '' })),
+  setFromMemory: (input: string) => set({ fromMemory: input }),
+  setLongPress: (input: string) => set({ longPress: input }),
   setOutputPath: (outputPath: null | string) =>
-    set({ outputPath: outputPath || '' }),
+    set(state => ({ outputPath: outputPath || state.outputPath })),
   decrypt: async () => {
-    const { fileData: data, pass } = get()
+    const { fileData: data, fromMemory, longPress } = get()
+    const pass = fromMemory + longPress || 'mpress'
 
     try {
       const decryptedData = await invoke('decrypt_data', { data, pass })
@@ -70,7 +125,8 @@ export const useStore = createWithEqualityFn<Store>((set, get) => ({
     }
   },
   encrypt: async () => {
-    const { fileData: data, pass } = get()
+    const { fileData: data, fromMemory, longPress } = get()
+    const pass = fromMemory + longPress || 'mpress'
     try {
       const encryptedData = await invoke('encrypt_data', { data, pass })
       set({ outputData: encryptedData as string })
@@ -94,7 +150,5 @@ export const useStore = createWithEqualityFn<Store>((set, get) => ({
       throw new Error(String(error))
     }
   },
-  resetState: () => {
-    set(initialState)
-  },
+  resetState: () => set(omit(initialState, ['config'])),
 }))

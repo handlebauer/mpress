@@ -19,7 +19,7 @@ export function shortenPath(path: string) {
   let [last] = rest.reverse()
 
   if (first.length > 10) first = first.slice(0, 5) + '..' + first.slice(-5)
-  if (last.length > 10) last = last.slice(0, 4) + '..' + last.slice(-4)
+  if (last.length > 10) last = last.slice(0, 3) + '..' + last.slice(-4)
 
   return `/${first}/../${last}`
 }

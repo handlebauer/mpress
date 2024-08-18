@@ -1,5 +1,5 @@
-import { MouseEvent, useEffect, useState } from 'react'
-import { Navigate, useNavigate } from 'react-router-dom'
+import { MouseEvent, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 import { Store, TargetOperation, useStore } from '~/store'
 
@@ -8,29 +8,32 @@ import SummaryContainer from '~/components/summary/SummaryContainer'
 import SummaryPaths from '~/components/summary/SummaryPaths'
 
 import { save } from '@tauri-apps/api/dialog'
+import { noop } from 'es-toolkit'
 
 export default function Confirm() {
   const navigate = useNavigate()
 
   const selector = (state: Store) =>
     [
+      state.setCurrentPage,
       state.fileName,
       state.outputPath,
       state.setOutputPath,
-      state.setPass,
       state.targetOperation,
       state.saveOutput,
     ] as const
   const [
+    setCurrentPage,
     fileName,
     outputPath,
     setOutputPath,
-    setPass,
     targetOperation,
     saveOutput,
   ] = useStore(selector)
 
-  const [wasPrompted, setWasPrompted] = useState<boolean>(false)
+  useEffect(() => {
+    setCurrentPage('/confirm')
+  }, [])
 
   async function promptSave() {
     if (targetOperation === TargetOperation.DECRYPT) {
@@ -49,14 +52,16 @@ export default function Confirm() {
   }
 
   useEffect(() => {
-    void promptSave().then(setWasPrompted)
+    if (outputPath === '') {
+      promptSave().then(noop).catch(noop)
+    }
   }, [])
 
   const handleModifyPathClick = (
     event: MouseEvent<HTMLButtonElement, globalThis.MouseEvent>,
   ) => {
     event.preventDefault()
-    void promptSave()
+    promptSave().then(noop).catch(console.error)
   }
 
   const handleConfirm = (
@@ -68,14 +73,6 @@ export default function Confirm() {
       .catch(console.error)
   }
 
-  if (outputPath === '') {
-    if (wasPrompted) {
-      setPass('')
-      return <Navigate to={'/auth'} replace />
-    }
-    return null
-  }
-
   return (
     <SummaryContainer>
       <SummaryPaths
@@ -85,6 +82,7 @@ export default function Confirm() {
       />
       <ConfirmButton
         targetOperation={targetOperation}
+        outputPath={outputPath}
         onConfirm={handleConfirm}
       />
     </SummaryContainer>

@@ -30,7 +30,6 @@ pub fn decrypt_data(data: Vec<u8>, pass: String) -> Result<Vec<u8>, String> {
     let salt = &data_without_signature[..SALT_SIZE];
     let nonce = &data_without_signature[SALT_SIZE..SALT_SIZE + NONCE_SIZE];
     let ciphertext = &data_without_signature[SALT_SIZE + NONCE_SIZE..];
-    println!("{:?}", &ciphertext);
 
     // Derive the key
     let mut key = [0u8; 32];
@@ -47,17 +46,3 @@ pub fn decrypt_data(data: Vec<u8>, pass: String) -> Result<Vec<u8>, String> {
 
     Ok(plaintext)
 }
-
-// #[tauri::command(async)]
-// pub fn decrypt_file(data: Vec<u8>, pass: String, path: String) -> Result<bool, String> {
-//     // Decrypt the contents
-//     let decrypted_data = decrypt_data(data, pass).map_err(|e| e.to_string())?;
-
-//     // Write decrypted data to the output file
-//     let mut output_file = File::create(path).map_err(|e| e.to_string())?;
-//     output_file
-//         .write_all(&decrypted_data)
-//         .map_err(|e| e.to_string())?;
-
-//     Ok(true)
-// }

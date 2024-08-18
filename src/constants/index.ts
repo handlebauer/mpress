@@ -1,2 +1,7 @@
-export const FROM_MEMORY_MAX_LENGTH = 5
-export const LONG_PRESS_MAX_LENGTH = 38
+export const FROM_MEMORY_MIN_LENGTH = 3
+export const FROM_MEMORY_MAX_LENGTH = 10
+export const FROM_MEMORY_DEFAULT_LENGTH = 5
+
+export const LONG_PRESS_DEFAULT_LENGTH = 38
+export const LONG_PRESS_MIN_LENGTH = 19
+export const LONG_PRESS_MAX_LENGTH = 76

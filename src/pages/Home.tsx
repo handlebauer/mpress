@@ -3,11 +3,18 @@ import { useNavigate } from 'react-router-dom'
 import { FileUploadFileAcceptDetails } from '@ark-ui/react'
 import { BasicFileUpload } from '~/components/ui/BasicFileUpload'
 
-import { useStore } from '~/store'
+import { Store, useStore } from '~/store'
+import { useEffect } from 'react'
 
 export default function Home() {
   const navigate = useNavigate()
-  const setFile = useStore(state => state.setFile)
+  const selector = (state: Store) =>
+    [state.setCurrentPage, state.setFile] as const
+  const [setCurrentPage, setFile] = useStore(selector)
+
+  useEffect(() => {
+    setCurrentPage('/')
+  }, [])
 
   const handleFileAccept = (details: FileUploadFileAcceptDetails) => {
     const [file] = details.files
