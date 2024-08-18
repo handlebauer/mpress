@@ -47,6 +47,16 @@ fn main() {
     tauri::Builder::default()
         .setup(|app| {
             let main = app.get_window("main").unwrap();
+
+            let info = app.package_info();
+            let version = &info.version;
+            let app_name = &info.name;
+
+            let version_string = format!("v{}.{}.{}", version.major, version.minor, version.patch);
+            let title = format!("{} {}", app_name, version_string);
+
+            main.set_title(&title).expect("set_title failed");
+
             main.set_resizable(false).expect("set_resizable failed");
             main.set_minimizable(false).expect("set_minimizable failed");
             main.set_maximizable(false).expect("set_maximizable failed");
