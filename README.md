@@ -1,7 +1,24 @@
-# Tauri + React + Typescript
+<p align="left">
+  <img src="https://data.hbauer.sh/mpress.png" alt="Your Project Logo" width="200">
+</p>
 
-This template should help get you started developing with Tauri, React and Typescript in Vite.
+### mpress
 
-## Recommended IDE Setup
+A simple macOS tool for encrypting/decrypting data
 
-- [VS Code](https://code.visualstudio.com/) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
+#### Installation
+
+
+1. Download [mpress.zip](https://data.hbauer.sh/mpress.zip)
+2. Unzip `mpress.zip`
+3. Right-click + Open `mpress.app`
+4. (Optionally move `mpress.app` to `~/Applications`)
+
+#### Usage
+
+
+1. Click to select a file (or drag and drop)
+2. Enter from-memory string
+3. Enter security key long-press
+4. Select output path
+5. (Optionally tweak settings by pressing `cmd+,`)
