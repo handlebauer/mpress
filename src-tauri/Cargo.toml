@@ -1,6 +1,6 @@
 [package]
 name = "mpress"
-version = "0.0.0"
+version = "0.1.0"
 description = "Multi-Stage Encrypt/Decrypt Tool"
 authors = ["hbauer"]
 edition = "2021"
