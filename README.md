@@ -12,6 +12,9 @@ A simple macOS tool for encrypting/decrypting data
 1. Download [mpress.zip](https://data.hbauer.sh/mpress.zip)
 2. Unzip `mpress.zip`
 3. Right-click + Open `mpress.app`
+4. Ignore the warning (click OK)
+5. Right-click + Open mpress.app a second time
+6. Click Open
 4. (Optionally move `mpress.app` to `~/Applications`)
 
 #### Usage
